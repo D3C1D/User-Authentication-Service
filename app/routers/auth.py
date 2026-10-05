@@ -1,10 +1,16 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from sqlalchemy.orm import Session
-from app.schemas.user import RegisterRequest
+from app.schemas.user import (
+RegisterRequest,
+LoginRequest
+)
 from app.database.session import get_db
 from app.models.user import User
-from app.services.hash_service import hash_password
+from app.services.hash_service import (
+    hash_password,
+    verify_password
+)
 
 router = APIRouter()
 
@@ -52,4 +58,35 @@ def register(
     return {
         "message":
             "User registered successfully"
+    }
+
+@router.post("/login")
+def login(
+    request: LoginRequest,
+    db: Session = Depends(get_db)
+):
+    user = (
+        db.query(User)
+        .filter(
+            User.email == request.email
+        )
+        .first()
+    )
+    if not user:
+        return {
+            "message":
+                "Invalid email or password"
+            }
+    is_valid = verify_password(
+        request.password,
+        user.hashed_password
+    )
+    if not is_valid:
+        return {
+            "message":
+                "Invalid email or password"
+        }
+    return {
+        "message":
+            "Login successful"
     }
