@@ -11,6 +11,9 @@ from app.services.hash_service import (
     hash_password,
     verify_password
 )
+from app.core.security import (
+    create_access_token
+)
 
 router = APIRouter()
 
@@ -86,7 +89,16 @@ def login(
             "message":
                 "Invalid email or password"
         }
+    access_token = (
+        create_access_token(
+            {
+                "sub": user.email
+            }
+        )
+    )
     return {
-        "message":
-            "Login successful"
+        "access_token":
+            access_token,
+        "token_type":
+            "bearer"
     }
