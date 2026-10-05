@@ -4,6 +4,10 @@ from datetime import (
     timedelta,
     timezone
 )
+from jose import JWTError
+from fastapi.security import (
+    OAuth2PasswordBearer
+)
 
 SECRET_KEY = (
     "super-secret-key-change-later"
@@ -36,3 +40,27 @@ def create_access_token(
         algorithm=ALGORITHM
     )
     return encoded_jwt
+
+def decode_access_token(
+    token: str
+):
+    try:
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[
+                ALGORITHM
+            ]
+        )
+        email = payload.get(
+            "sub"
+        )
+        return email
+    except JWTError:
+        return None
+
+oauth2_scheme = (
+    OAuth2PasswordBearer(
+        tokenUrl="login"
+    )
+)
