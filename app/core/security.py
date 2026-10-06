@@ -1,4 +1,5 @@
 import os
+import secrets
 
 from datetime import (
     datetime,
@@ -197,3 +198,9 @@ def verify_token(
     except JWTError:
 
         return None
+
+def create_password_reset_token():
+
+    return secrets.token_urlsafe(
+        32
+    )

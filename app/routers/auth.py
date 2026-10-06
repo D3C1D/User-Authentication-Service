@@ -35,9 +35,107 @@ from app.core.security import (
     decode_refresh_token
 )
 
+from app.schemas.user import (
+    PasswordResetRequest,
+    PasswordResetConfirm
+)
+
+from app.core.security import (
+    create_password_reset_token
+)
+
 
 router = APIRouter()
+password_reset_tokens = {}
 
+@router.post(
+    "/forgot-password"
+)
+def forgot_password(
+    request: PasswordResetRequest,
+    db: Session = Depends(get_db)
+):
+
+    user = (
+        db.query(User)
+        .filter(
+            User.email == request.email
+        )
+        .first()
+    )
+
+    if not user:
+
+        return {
+            "message":
+                "User not found"
+        }
+
+    token = (
+        create_password_reset_token()
+    )
+
+    password_reset_tokens[
+        token
+    ] = user.email
+
+    return {
+        "reset_token":
+            token
+    }
+
+@router.post(
+    "/reset-password"
+)
+def reset_password(
+    request: PasswordResetConfirm,
+    db: Session = Depends(get_db)
+):
+
+    email = (
+        password_reset_tokens.get(
+            request.token
+        )
+    )
+
+    if not email:
+
+        return {
+            "message":
+                "Invalid token"
+        }
+
+    user = (
+        db.query(User)
+        .filter(
+            User.email == email
+        )
+        .first()
+    )
+
+    if not user:
+
+        return {
+            "message":
+                "User not found"
+        }
+
+    user.hashed_password = (
+        hash_password(
+            request.new_password
+        )
+    )
+
+    db.commit()
+
+    del password_reset_tokens[
+        request.token
+    ]
+
+    return {
+        "message":
+            "Password reset successful"
+    }
 
 @router.post("/register")
 def register(

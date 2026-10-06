@@ -54,3 +54,44 @@ def test_login_user():
     )
 
     assert response.status_code == 200
+
+def test_forgot_password():
+
+    response = client.post(
+        "/forgot-password",
+        json={
+            "email":
+                "test@example.com"
+        }
+    )
+
+    assert response.status_code == 200
+
+
+def test_reset_password():
+
+    forgot = client.post(
+        "/forgot-password",
+        json={
+            "email":
+                "test@example.com"
+        }
+    )
+
+    token = (
+        forgot.json()[
+            "reset_token"
+        ]
+    )
+
+    response = client.post(
+        "/reset-password",
+        json={
+            "token":
+                token,
+            "new_password":
+                "NewPassword123"
+        }
+    )
+
+    assert response.status_code == 200
