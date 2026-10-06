@@ -1,16 +1,24 @@
-from fastapi import APIRouter
-from fastapi import Depends
+from fastapi import (
+    APIRouter,
+    Depends
+)
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import (
+    Session
+)
 
 from app.schemas.user import (
     RegisterRequest,
     LoginRequest
 )
 
-from app.database.session import get_db
+from app.database.session import (
+    get_db
+)
 
-from app.models.user import User
+from app.models.user import (
+    User
+)
 
 from app.services.hash_service import (
     hash_password,
@@ -22,7 +30,9 @@ from app.services.auth_service import (
 )
 
 from app.core.security import (
-    create_access_token
+    create_access_token,
+    create_refresh_token,
+    decode_refresh_token
 )
 
 
@@ -128,9 +138,53 @@ def login(
         )
     )
 
+    refresh_token = (
+        create_refresh_token(
+            {
+                "sub": user.email
+            }
+        )
+    )
+
     return {
-        "access_token": access_token,
-        "token_type": "bearer"
+        "access_token":
+            access_token,
+        "refresh_token":
+            refresh_token,
+        "token_type":
+            "bearer"
+    }
+
+
+@router.post("/refresh")
+def refresh_token(
+    token: str
+):
+
+    email = decode_refresh_token(
+        token
+    )
+
+    if not email:
+
+        return {
+            "message":
+                "Invalid refresh token"
+        }
+
+    access_token = (
+        create_access_token(
+            {
+                "sub": email
+            }
+        )
+    )
+
+    return {
+        "access_token":
+            access_token,
+        "token_type":
+            "bearer"
     }
 
 
